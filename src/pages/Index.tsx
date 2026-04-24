@@ -1,4 +1,4 @@
-import { Activity, CalendarDays, Dumbbell, RotateCcw, Shield, Trophy, WalletCards } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, Heart, Megaphone, RotateCcw, Shield, Trophy, Users, WalletCards } from "lucide-react";
 import type { TrainingFocus } from "@/domain/career";
 import { useCareerStore } from "@/state/careerStore";
 
@@ -13,6 +13,7 @@ const trainingOptions: Array<{ focus: TrainingFocus; label: string; detail: stri
 const phaseLabel = {
   training: "Treino",
   match: "Partida",
+  life: "Vida",
   recovery: "Recuperação",
 };
 
@@ -25,8 +26,8 @@ const attributeLabels: Record<TrainingFocus, string> = {
 };
 
 const Index = () => {
-  const { career, train, playMatch, recover, resetCareer } = useCareerStore();
-  const { player, calendar, lastMatch, ledger } = career;
+  const { career, train, playMatch, chooseLifeEvent, recover, resetCareer } = useCareerStore();
+  const { player, calendar, lastMatch, ledger, pendingLifeEvent, relationships } = career;
   const primaryAction = calendar.phase === "match" ? playMatch : calendar.phase === "recovery" ? recover : undefined;
 
   return (
