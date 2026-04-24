@@ -73,6 +73,16 @@ const Index = () => {
               <p className="text-xl font-black">{player.reputation}</p>
             </div>
           </div>
+
+          <div className="mt-3 rounded-md bg-muted p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-bold">{phaseLabel[calendar.phase]}</p>
+              </div>
+              <p className="text-sm font-black">vs {calendar.nextOpponent}</p>
+            </div>
+          </div>
         </div>
 
         <section className="py-5">
@@ -83,7 +93,7 @@ const Index = () => {
           <div className="space-y-3">
             {Object.entries(player.attributes).map(([name, value]) => (
               <div key={name} className="grid grid-cols-[92px_1fr_32px] items-center gap-3">
-                <span className="text-sm capitalize text-muted-foreground">{name}</span>
+                <span className="text-sm text-muted-foreground">{attributeLabels[name as TrainingFocus]}</span>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
                 </div>
