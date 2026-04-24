@@ -75,6 +75,21 @@ const Index = () => {
             </div>
           </div>
 
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Feliz</p>
+                <p className="text-lg font-black">{player.happiness}</p>
+              </div>
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Técnico</p>
+                <p className="text-lg font-black">{relationships.coach}</p>
+              </div>
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Elenco</p>
+                <p className="text-lg font-black">{relationships.squad}</p>
+              </div>
+            </div>
+
           <div className="mt-3 rounded-md bg-muted p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -105,7 +120,32 @@ const Index = () => {
         </section>
 
         <section className="mt-auto space-y-3 pb-3">
-          {calendar.phase === "training" ? (
+          {calendar.phase === "life" && pendingLifeEvent ? (
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-accent text-accent-foreground">
+                  <Megaphone className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black leading-tight">{pendingLifeEvent.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{pendingLifeEvent.description}</p>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                {pendingLifeEvent.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => chooseLifeEvent(option)}
+                    className="rounded-md border border-border bg-secondary px-3 py-3 text-left text-secondary-foreground"
+                  >
+                    <span className="block text-sm font-black">{option.label}</span>
+                    <span className="mt-1 block text-xs font-bold text-muted-foreground">{option.detail}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : calendar.phase === "training" ? (
             <div className="grid grid-cols-2 gap-2">
               {trainingOptions.map((option) => (
                 <button
