@@ -16,6 +16,9 @@ export const loadCareerSave = (): CareerSnapshot | undefined => {
       ...parsed,
       calendar: { ...initialCareer.calendar, ...parsed.calendar },
       ledger: { ...initialCareer.ledger, ...parsed.ledger },
+      player: { ...initialCareer.player, ...parsed.player, attributes: { ...initialCareer.player.attributes, ...parsed.player?.attributes } },
+      relationships: { ...initialCareer.relationships, ...parsed.relationships },
+      eventLog: parsed.eventLog ?? [],
       matchHistory: parsed.matchHistory ?? (parsed.lastMatch ? [parsed.lastMatch] : []),
     } as CareerSnapshot;
   } catch {

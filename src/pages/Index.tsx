@@ -1,4 +1,4 @@
-import { Activity, CalendarDays, Dumbbell, RotateCcw, Shield, Trophy, WalletCards } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, Heart, Megaphone, RotateCcw, Shield, Trophy, Users, WalletCards } from "lucide-react";
 import type { TrainingFocus } from "@/domain/career";
 import { useCareerStore } from "@/state/careerStore";
 
@@ -13,6 +13,7 @@ const trainingOptions: Array<{ focus: TrainingFocus; label: string; detail: stri
 const phaseLabel = {
   training: "Treino",
   match: "Partida",
+  life: "Vida",
   recovery: "Recuperação",
 };
 
@@ -25,8 +26,8 @@ const attributeLabels: Record<TrainingFocus, string> = {
 };
 
 const Index = () => {
-  const { career, train, playMatch, recover, resetCareer } = useCareerStore();
-  const { player, calendar, lastMatch, ledger } = career;
+  const { career, train, playMatch, chooseLifeEvent, recover, resetCareer } = useCareerStore();
+  const { player, calendar, lastMatch, ledger, pendingLifeEvent, relationships } = career;
   const primaryAction = calendar.phase === "match" ? playMatch : calendar.phase === "recovery" ? recover : undefined;
 
   return (
@@ -74,6 +75,21 @@ const Index = () => {
             </div>
           </div>
 
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Feliz</p>
+                <p className="text-lg font-black">{player.happiness}</p>
+              </div>
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Técnico</p>
+                <p className="text-lg font-black">{relationships.coach}</p>
+              </div>
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs text-muted-foreground">Elenco</p>
+                <p className="text-lg font-black">{relationships.squad}</p>
+              </div>
+            </div>
+
           <div className="mt-3 rounded-md bg-muted p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -104,7 +120,32 @@ const Index = () => {
         </section>
 
         <section className="mt-auto space-y-3 pb-3">
-          {calendar.phase === "training" ? (
+          {calendar.phase === "life" && pendingLifeEvent ? (
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-accent text-accent-foreground">
+                  <Megaphone className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black leading-tight">{pendingLifeEvent.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{pendingLifeEvent.description}</p>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                {pendingLifeEvent.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => chooseLifeEvent(option)}
+                    className="rounded-md border border-border bg-secondary px-3 py-3 text-left text-secondary-foreground"
+                  >
+                    <span className="block text-sm font-black">{option.label}</span>
+                    <span className="mt-1 block text-xs font-bold text-muted-foreground">{option.detail}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : calendar.phase === "training" ? (
             <div className="grid grid-cols-2 gap-2">
               {trainingOptions.map((option) => (
                 <button
@@ -137,6 +178,20 @@ const Index = () => {
               </div>
               <p className="font-black">€{ledger.balance}</p>
             </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Salário</p>
+                <p className="font-black">€{ledger.weeklySalary}</p>
+              </div>
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Custos</p>
+                <p className="font-black">€{ledger.weeklyExpenses}</p>
+              </div>
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Líquido</p>
+                <p className="font-black">€{ledger.lastNetIncome}</p>
+              </div>
+            </div>
             {lastMatch && (
               <div className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
                 <p className="font-bold text-foreground">Último jogo: {lastMatch.teamGoals}–{lastMatch.opponentGoals} vs {lastMatch.opponent}</p>
@@ -157,20 +212,35 @@ const Index = () => {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-bold">Relações</p>
+              </div>
+              <p className="text-xs font-bold text-muted-foreground">Fãs {relationships.fans}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-md bg-muted p-2"><Heart className="mx-auto mb-1 h-4 w-4" /><p>Felicidade</p><b>{player.happiness}</b></div>
+              <div className="rounded-md bg-muted p-2"><Shield className="mx-auto mb-1 h-4 w-4" /><p>Técnico</p><b>{relationships.coach}</b></div>
+              <div className="rounded-md bg-muted p-2"><Users className="mx-auto mb-1 h-4 w-4" /><p>Elenco</p><b>{relationships.squad}</b></div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <Dumbbell className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-bold">Histórico recente</p>
+                <p className="text-sm font-bold">Linha do tempo</p>
               </div>
               <p className="text-xs font-bold text-muted-foreground">Ganho €{ledger.totalEarned}</p>
             </div>
             <div className="space-y-2">
-              {career.matchHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma partida disputada.</p>
+              {career.eventLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum evento registrado.</p>
               ) : (
-                career.matchHistory.slice(0, 4).map((match) => (
-                  <div key={match.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm">
-                    <span className="truncate text-muted-foreground">{match.opponent}</span>
-                    <span className="font-black">{match.teamGoals}-{match.opponentGoals}</span>
-                    <span className="rounded-sm bg-muted px-2 py-1 text-xs font-black">{match.playerRating}</span>
+                career.eventLog.slice(0, 5).map((event) => (
+                  <div key={event.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm">
+                    <span className="rounded-sm bg-muted px-2 py-1 text-xs font-black">S{event.week}</span>
+                    <span className="truncate text-muted-foreground">{event.label}</span>
+                    <span className="text-xs font-black uppercase text-primary">{event.type}</span>
                   </div>
                 ))
               )}

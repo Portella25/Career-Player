@@ -17,13 +17,20 @@ export type PlayerProfile = {
   reputation: number;
   energy: number;
   form: number;
+  happiness: number;
   attributes: PlayerAttributes;
+};
+
+export type RelationshipMap = {
+  coach: number;
+  squad: number;
+  fans: number;
 };
 
 export type CareerCalendar = {
   season: number;
   week: number;
-  phase: "training" | "match" | "recovery";
+  phase: "training" | "match" | "life" | "recovery";
   nextOpponent: string;
 };
 
@@ -49,14 +56,50 @@ export type MatchResult = {
   events: MatchEvent[];
 };
 
+export type LifeEventOption = {
+  id: string;
+  label: string;
+  detail: string;
+  effects: {
+    reputation?: number;
+    energy?: number;
+    form?: number;
+    happiness?: number;
+    balance?: number;
+    coach?: number;
+    squad?: number;
+    fans?: number;
+  };
+};
+
+export type LifeEvent = {
+  id: string;
+  title: string;
+  description: string;
+  options: LifeEventOption[];
+};
+
+export type CareerEventLog = {
+  id: string;
+  week: number;
+  type: "training" | "match" | "life" | "finance";
+  label: string;
+};
+
 export type CareerSnapshot = {
   player: PlayerProfile;
   calendar: CareerCalendar;
   lastMatch?: MatchResult;
+  pendingLifeEvent?: LifeEvent;
   matchHistory: MatchResult[];
+  relationships: RelationshipMap;
+  eventLog: CareerEventLog[];
   ledger: {
     balance: number;
     weeklySalary: number;
+    weeklyExpenses: number;
+    taxRate: number;
     totalEarned: number;
+    lastNetIncome: number;
   };
 };

@@ -1,7 +1,36 @@
-import type { CareerSnapshot, MatchResult, TrainingFocus } from "@/domain/career";
+import type { CareerSnapshot, LifeEvent, LifeEventOption, MatchResult, TrainingFocus } from "@/domain/career";
 import { createSeededRandom } from "./random";
 
 const opponents = ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II", "Rotterdam 1908", "Monaco Rouge"];
+const lifeEvents: LifeEvent[] = [
+  {
+    id: "coach-extra-session",
+    title: "O treinador chama para uma conversa",
+    description: "Ele quer saber se você aceita um treino extra depois da partida para provar compromisso.",
+    options: [
+      { id: "accept", label: "Aceitar treino", detail: "+Treinador · -Energia", effects: { coach: 6, energy: -10, form: 2 } },
+      { id: "decline", label: "Preservar corpo", detail: "+Felicidade · -Treinador", effects: { happiness: 5, coach: -3, energy: 6 } },
+    ],
+  },
+  {
+    id: "fans-photo",
+    title: "Torcedores esperam no portão",
+    description: "Um pequeno grupo pede fotos enquanto você tenta sair rápido para descansar.",
+    options: [
+      { id: "stop", label: "Parar para fotos", detail: "+Fãs · -Energia", effects: { fans: 7, reputation: 2, energy: -5 } },
+      { id: "leave", label: "Ir embora", detail: "+Energia · -Fãs", effects: { energy: 5, fans: -4, happiness: -2 } },
+    ],
+  },
+  {
+    id: "squad-dinner",
+    title: "Jantar do elenco",
+    description: "Veteranos convidam você para se integrar, mas a conta pesa no orçamento da semana.",
+    options: [
+      { id: "join", label: "Ir ao jantar", detail: "+Elenco · -€60", effects: { squad: 8, happiness: 4, balance: -60 } },
+      { id: "skip", label: "Ficar em casa", detail: "+€ · -Elenco", effects: { squad: -3, happiness: -1, energy: 4 } },
+    ],
+  },
+];
 
 export const initialCareer: CareerSnapshot = {
   player: {
@@ -13,6 +42,7 @@ export const initialCareer: CareerSnapshot = {
     reputation: 12,
     energy: 82,
     form: 61,
+    happiness: 55,
     attributes: {
       finishing: 64,
       passing: 53,
@@ -27,15 +57,29 @@ export const initialCareer: CareerSnapshot = {
     phase: "training",
     nextOpponent: opponents[0],
   },
+  relationships: {
+    coach: 48,
+    squad: 44,
+    fans: 36,
+  },
+  eventLog: [],
   matchHistory: [],
   ledger: {
     balance: 450,
     weeklySalary: 120,
+    weeklyExpenses: 35,
+    taxRate: 0.12,
     totalEarned: 450,
+    lastNetIncome: 0,
   },
 };
 
 const clamp = (value: number, min = 0, max = 99) => Math.min(max, Math.max(min, value));
+
+const getLifeEvent = (season: number, week: number) => {
+  const random = createSeededRandom(`life:${season}:${week}`);
+  return lifeEvents[Math.floor(random() * lifeEvents.length)];
+};
 
 export const trainPlayer = (career: CareerSnapshot, focus: TrainingFocus): CareerSnapshot => {
   const fatigue = focus === "stamina" ? 4 : 7;
@@ -51,6 +95,10 @@ export const trainPlayer = (career: CareerSnapshot, focus: TrainingFocus): Caree
         [focus]: clamp(career.player.attributes[focus] + 1),
       },
     },
+    eventLog: [
+      { id: `training:${career.calendar.season}:${career.calendar.week}:${focus}`, week: career.calendar.week, type: "training" as const, label: `Treino de ${focus}` },
+      ...(career.eventLog ?? []),
+    ].slice(0, 8),
     calendar: {
       ...career.calendar,
       phase: "match",
@@ -94,6 +142,9 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const playerRating = clamp(Math.round(58 + goals * 14 + assists * 8 + career.player.form * 0.12 - (100 - career.player.energy) * 0.08), 40, 99);
   const opponentGoals = Math.floor(random() * 3);
   const teamGoals = Math.max(goals, Math.floor(random() * 2) + goals + (assists > 0 ? 1 : 0));
+  const grossSalary = career.ledger.weeklySalary;
+  const tax = Math.round(grossSalary * career.ledger.taxRate);
+  const netIncome = grossSalary - tax - career.ledger.weeklyExpenses;
   const result: MatchResult = {
     id: seed,
     opponent: career.calendar.nextOpponent,
@@ -117,22 +168,59 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
       energy: clamp(career.player.energy + result.energyDelta),
       reputation: clamp(career.player.reputation + result.reputationDelta),
       form: clamp(career.player.form + goals * 2 + assists - 1),
+      happiness: clamp(career.player.happiness + (teamGoals > opponentGoals ? 2 : -2)),
     },
     calendar: {
       season: nextSeason,
       week: nextWeek,
-      phase: "recovery",
+      phase: "life",
       nextOpponent: getNextOpponent(nextSeason, nextWeek),
     },
     ledger: {
       ...career.ledger,
-      balance: career.ledger.balance + career.ledger.weeklySalary,
-      totalEarned: career.ledger.totalEarned + career.ledger.weeklySalary,
+      balance: career.ledger.balance + netIncome,
+      totalEarned: career.ledger.totalEarned + grossSalary,
+      lastNetIncome: netIncome,
     },
+    pendingLifeEvent: getLifeEvent(nextSeason, nextWeek),
     matchHistory: [result, ...(career.matchHistory ?? [])].slice(0, 6),
+    eventLog: [
+      { id: `match:${result.id}`, week: career.calendar.week, type: "match" as const, label: `${teamGoals}-${opponentGoals} vs ${result.opponent}` },
+      { id: `finance:${result.id}`, week: career.calendar.week, type: "finance" as const, label: `Saldo semanal €${netIncome}` },
+      ...(career.eventLog ?? []),
+    ].slice(0, 8),
     lastMatch: result,
   };
 };
+
+export const resolveLifeEvent = (career: CareerSnapshot, option: LifeEventOption): CareerSnapshot => ({
+  ...career,
+  player: {
+    ...career.player,
+    reputation: clamp(career.player.reputation + (option.effects.reputation ?? 0)),
+    energy: clamp(career.player.energy + (option.effects.energy ?? 0)),
+    form: clamp(career.player.form + (option.effects.form ?? 0)),
+    happiness: clamp(career.player.happiness + (option.effects.happiness ?? 0)),
+  },
+  relationships: {
+    coach: clamp(career.relationships.coach + (option.effects.coach ?? 0)),
+    squad: clamp(career.relationships.squad + (option.effects.squad ?? 0)),
+    fans: clamp(career.relationships.fans + (option.effects.fans ?? 0)),
+  },
+  ledger: {
+    ...career.ledger,
+    balance: career.ledger.balance + (option.effects.balance ?? 0),
+  },
+  pendingLifeEvent: undefined,
+  eventLog: [
+    { id: `life:${career.calendar.season}:${career.calendar.week}:${option.id}`, week: career.calendar.week, type: "life" as const, label: option.label },
+    ...(career.eventLog ?? []),
+  ].slice(0, 8),
+  calendar: {
+    ...career.calendar,
+    phase: "recovery",
+  },
+});
 
 export const recoverPlayer = (career: CareerSnapshot): CareerSnapshot => ({
   ...career,
