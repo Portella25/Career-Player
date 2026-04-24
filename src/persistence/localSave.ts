@@ -10,7 +10,6 @@ export const loadCareerSave = (): CareerSnapshot | undefined => {
   if (!rawSave) return undefined;
 
   try {
-    return JSON.parse(rawSave) as CareerSnapshot;
     const parsed = JSON.parse(rawSave) as Partial<CareerSnapshot>;
     return {
       ...initialCareer,
