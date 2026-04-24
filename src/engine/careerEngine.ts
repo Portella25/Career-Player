@@ -1,7 +1,36 @@
-import type { CareerSnapshot, MatchResult, TrainingFocus } from "@/domain/career";
+import type { CareerSnapshot, LifeEvent, LifeEventOption, MatchResult, TrainingFocus } from "@/domain/career";
 import { createSeededRandom } from "./random";
 
 const opponents = ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II", "Rotterdam 1908", "Monaco Rouge"];
+const lifeEvents: LifeEvent[] = [
+  {
+    id: "coach-extra-session",
+    title: "O treinador chama para uma conversa",
+    description: "Ele quer saber se você aceita um treino extra depois da partida para provar compromisso.",
+    options: [
+      { id: "accept", label: "Aceitar treino", detail: "+Treinador · -Energia", effects: { coach: 6, energy: -10, form: 2 } },
+      { id: "decline", label: "Preservar corpo", detail: "+Felicidade · -Treinador", effects: { happiness: 5, coach: -3, energy: 6 } },
+    ],
+  },
+  {
+    id: "fans-photo",
+    title: "Torcedores esperam no portão",
+    description: "Um pequeno grupo pede fotos enquanto você tenta sair rápido para descansar.",
+    options: [
+      { id: "stop", label: "Parar para fotos", detail: "+Fãs · -Energia", effects: { fans: 7, reputation: 2, energy: -5 } },
+      { id: "leave", label: "Ir embora", detail: "+Energia · -Fãs", effects: { energy: 5, fans: -4, happiness: -2 } },
+    ],
+  },
+  {
+    id: "squad-dinner",
+    title: "Jantar do elenco",
+    description: "Veteranos convidam você para se integrar, mas a conta pesa no orçamento da semana.",
+    options: [
+      { id: "join", label: "Ir ao jantar", detail: "+Elenco · -€60", effects: { squad: 8, happiness: 4, balance: -60 } },
+      { id: "skip", label: "Ficar em casa", detail: "+€ · -Elenco", effects: { squad: -3, happiness: -1, energy: 4 } },
+    ],
+  },
+];
 
 export const initialCareer: CareerSnapshot = {
   player: {
@@ -13,6 +42,7 @@ export const initialCareer: CareerSnapshot = {
     reputation: 12,
     energy: 82,
     form: 61,
+    happiness: 55,
     attributes: {
       finishing: 64,
       passing: 53,
@@ -27,11 +57,20 @@ export const initialCareer: CareerSnapshot = {
     phase: "training",
     nextOpponent: opponents[0],
   },
+  relationships: {
+    coach: 48,
+    squad: 44,
+    fans: 36,
+  },
+  eventLog: [],
   matchHistory: [],
   ledger: {
     balance: 450,
     weeklySalary: 120,
+    weeklyExpenses: 35,
+    taxRate: 0.12,
     totalEarned: 450,
+    lastNetIncome: 0,
   },
 };
 
