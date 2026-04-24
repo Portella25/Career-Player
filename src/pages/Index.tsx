@@ -178,6 +178,20 @@ const Index = () => {
               </div>
               <p className="font-black">€{ledger.balance}</p>
             </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Salário</p>
+                <p className="font-black">€{ledger.weeklySalary}</p>
+              </div>
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Custos</p>
+                <p className="font-black">€{ledger.weeklyExpenses}</p>
+              </div>
+              <div className="rounded-md bg-muted p-2">
+                <p className="text-muted-foreground">Líquido</p>
+                <p className="font-black">€{ledger.lastNetIncome}</p>
+              </div>
+            </div>
             {lastMatch && (
               <div className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
                 <p className="font-bold text-foreground">Último jogo: {lastMatch.teamGoals}–{lastMatch.opponentGoals} vs {lastMatch.opponent}</p>
@@ -198,20 +212,35 @@ const Index = () => {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-bold">Relações</p>
+              </div>
+              <p className="text-xs font-bold text-muted-foreground">Fãs {relationships.fans}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-md bg-muted p-2"><Heart className="mx-auto mb-1 h-4 w-4" /><p>Felicidade</p><b>{player.happiness}</b></div>
+              <div className="rounded-md bg-muted p-2"><Shield className="mx-auto mb-1 h-4 w-4" /><p>Técnico</p><b>{relationships.coach}</b></div>
+              <div className="rounded-md bg-muted p-2"><Users className="mx-auto mb-1 h-4 w-4" /><p>Elenco</p><b>{relationships.squad}</b></div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <Dumbbell className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-bold">Histórico recente</p>
+                <p className="text-sm font-bold">Linha do tempo</p>
               </div>
               <p className="text-xs font-bold text-muted-foreground">Ganho €{ledger.totalEarned}</p>
             </div>
             <div className="space-y-2">
-              {career.matchHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma partida disputada.</p>
+              {career.eventLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum evento registrado.</p>
               ) : (
-                career.matchHistory.slice(0, 4).map((match) => (
-                  <div key={match.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm">
-                    <span className="truncate text-muted-foreground">{match.opponent}</span>
-                    <span className="font-black">{match.teamGoals}-{match.opponentGoals}</span>
-                    <span className="rounded-sm bg-muted px-2 py-1 text-xs font-black">{match.playerRating}</span>
+                career.eventLog.slice(0, 5).map((event) => (
+                  <div key={event.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm">
+                    <span className="rounded-sm bg-muted px-2 py-1 text-xs font-black">S{event.week}</span>
+                    <span className="truncate text-muted-foreground">{event.label}</span>
+                    <span className="text-xs font-black uppercase text-primary">{event.type}</span>
                   </div>
                 ))
               )}
