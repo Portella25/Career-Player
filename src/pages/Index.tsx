@@ -1,12 +1,28 @@
-import { Activity, Dumbbell, RotateCcw, Shield, Trophy } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, RotateCcw, Shield, Trophy, WalletCards } from "lucide-react";
 import type { TrainingFocus } from "@/domain/career";
 import { useCareerStore } from "@/state/careerStore";
 
-const trainingOptions: Array<{ focus: TrainingFocus; label: string }> = [
-  { focus: "finishing", label: "Finalização" },
-  { focus: "pace", label: "Explosão" },
-  { focus: "mentality", label: "Mental" },
+const trainingOptions: Array<{ focus: TrainingFocus; label: string; detail: string }> = [
+  { focus: "finishing", label: "Finalização", detail: "+1 FIN · -7 energia" },
+  { focus: "passing", label: "Passe", detail: "+1 PAS · -7 energia" },
+  { focus: "pace", label: "Explosão", detail: "+1 VEL · -7 energia" },
+  { focus: "stamina", label: "Resistência", detail: "+1 RES · -4 energia" },
+  { focus: "mentality", label: "Mental", detail: "+1 MEN · -7 energia" },
 ];
+
+const phaseLabel = {
+  training: "Treino",
+  match: "Partida",
+  recovery: "Recuperação",
+};
+
+const attributeLabels: Record<TrainingFocus, string> = {
+  finishing: "Finalização",
+  passing: "Passe",
+  pace: "Velocidade",
+  stamina: "Resistência",
+  mentality: "Mentalidade",
+};
 
 const Index = () => {
   const { career, train, playMatch, recover, resetCareer } = useCareerStore();
