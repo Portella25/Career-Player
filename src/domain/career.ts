@@ -24,6 +24,7 @@ export type CareerCalendar = {
   season: number;
   week: number;
   phase: "training" | "match" | "recovery";
+  nextOpponent: string;
 };
 
 export type TrainingFocus = keyof PlayerAttributes;
@@ -38,6 +39,8 @@ export type MatchEvent = {
 export type MatchResult = {
   id: string;
   opponent: string;
+  teamGoals: number;
+  opponentGoals: number;
   playerRating: number;
   goals: number;
   assists: number;
@@ -50,8 +53,10 @@ export type CareerSnapshot = {
   player: PlayerProfile;
   calendar: CareerCalendar;
   lastMatch?: MatchResult;
+  matchHistory: MatchResult[];
   ledger: {
     balance: number;
     weeklySalary: number;
+    totalEarned: number;
   };
 };
