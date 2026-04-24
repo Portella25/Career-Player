@@ -96,7 +96,7 @@ export const trainPlayer = (career: CareerSnapshot, focus: TrainingFocus): Caree
       },
     },
     eventLog: [
-      { id: `training:${career.calendar.season}:${career.calendar.week}:${focus}`, week: career.calendar.week, type: "training", label: `Treino de ${focus}` },
+      { id: `training:${career.calendar.season}:${career.calendar.week}:${focus}`, week: career.calendar.week, type: "training" as const, label: `Treino de ${focus}` },
       ...(career.eventLog ?? []),
     ].slice(0, 8),
     calendar: {
@@ -185,8 +185,8 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
     pendingLifeEvent: getLifeEvent(nextSeason, nextWeek),
     matchHistory: [result, ...(career.matchHistory ?? [])].slice(0, 6),
     eventLog: [
-      { id: `match:${result.id}`, week: career.calendar.week, type: "match", label: `${teamGoals}-${opponentGoals} vs ${result.opponent}` },
-      { id: `finance:${result.id}`, week: career.calendar.week, type: "finance", label: `Saldo semanal €${netIncome}` },
+      { id: `match:${result.id}`, week: career.calendar.week, type: "match" as const, label: `${teamGoals}-${opponentGoals} vs ${result.opponent}` },
+      { id: `finance:${result.id}`, week: career.calendar.week, type: "finance" as const, label: `Saldo semanal €${netIncome}` },
       ...(career.eventLog ?? []),
     ].slice(0, 8),
     lastMatch: result,
@@ -213,7 +213,7 @@ export const resolveLifeEvent = (career: CareerSnapshot, option: LifeEventOption
   },
   pendingLifeEvent: undefined,
   eventLog: [
-    { id: `life:${career.calendar.season}:${career.calendar.week}:${option.id}`, week: career.calendar.week, type: "life", label: option.label },
+    { id: `life:${career.calendar.season}:${career.calendar.week}:${option.id}`, week: career.calendar.week, type: "life" as const, label: option.label },
     ...(career.eventLog ?? []),
   ].slice(0, 8),
   calendar: {
