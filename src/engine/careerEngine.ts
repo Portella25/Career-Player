@@ -1,6 +1,8 @@
 import type { CareerSnapshot, MatchResult, TrainingFocus } from "@/domain/career";
 import { createSeededRandom } from "./random";
 
+const opponents = ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II", "Rotterdam 1908", "Monaco Rouge"];
+
 export const initialCareer: CareerSnapshot = {
   player: {
     id: "academy-10",
@@ -23,10 +25,13 @@ export const initialCareer: CareerSnapshot = {
     season: 2026,
     week: 1,
     phase: "training",
+    nextOpponent: opponents[0],
   },
+  matchHistory: [],
   ledger: {
     balance: 450,
     weeklySalary: 120,
+    totalEarned: 450,
   },
 };
 
@@ -51,6 +56,11 @@ export const trainPlayer = (career: CareerSnapshot, focus: TrainingFocus): Caree
       phase: "match",
     },
   };
+};
+
+const getNextOpponent = (season: number, week: number) => {
+  const random = createSeededRandom(`calendar:${season}:${week}`);
+  return opponents[Math.floor(random() * opponents.length)];
 };
 
 export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
@@ -82,9 +92,13 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   events.sort((a, b) => a.minute - b.minute);
 
   const playerRating = clamp(Math.round(58 + goals * 14 + assists * 8 + career.player.form * 0.12 - (100 - career.player.energy) * 0.08), 40, 99);
+  const opponentGoals = Math.floor(random() * 3);
+  const teamGoals = Math.max(goals, Math.floor(random() * 2) + goals + (assists > 0 ? 1 : 0));
   const result: MatchResult = {
     id: seed,
-    opponent: ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II"][Math.floor(random() * 4)],
+    opponent: career.calendar.nextOpponent,
+    teamGoals,
+    opponentGoals,
     playerRating,
     goals,
     assists,
@@ -92,6 +106,9 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
     energyDelta: -14,
     events,
   };
+
+  const nextSeason = career.calendar.week >= 52 ? career.calendar.season + 1 : career.calendar.season;
+  const nextWeek = career.calendar.week >= 52 ? 1 : career.calendar.week + 1;
 
   return {
     ...career,
@@ -102,14 +119,17 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
       form: clamp(career.player.form + goals * 2 + assists - 1),
     },
     calendar: {
-      season: career.calendar.week >= 52 ? career.calendar.season + 1 : career.calendar.season,
-      week: career.calendar.week >= 52 ? 1 : career.calendar.week + 1,
+      season: nextSeason,
+      week: nextWeek,
       phase: "recovery",
+      nextOpponent: getNextOpponent(nextSeason, nextWeek),
     },
     ledger: {
       ...career.ledger,
       balance: career.ledger.balance + career.ledger.weeklySalary,
+      totalEarned: career.ledger.totalEarned + career.ledger.weeklySalary,
     },
+    matchHistory: [result, ...(career.matchHistory ?? [])].slice(0, 6),
     lastMatch: result,
   };
 };
