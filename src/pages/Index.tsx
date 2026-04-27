@@ -127,6 +127,32 @@ const Index = () => {
           </div>
         </section>
 
+        <section className="space-y-3 pb-5">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-bold">Metas da temporada</h2>
+              </div>
+              {lastAssessment && <span className="rounded-md bg-primary px-2 py-1 text-xs font-black text-primary-foreground">{lastAssessment.grade}</span>}
+            </div>
+            <div className="space-y-3">
+              {objectives.map((objective) => (
+                <div key={objective.id}>
+                  <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+                    <span className="font-bold text-muted-foreground">{objective.label}</span>
+                    <span className="font-black">{objective.current}/{objective.target}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (objective.current / objective.target) * 100)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {lastAssessment && <p className="mt-3 text-xs font-bold text-muted-foreground">Avaliação: {lastAssessment.label} · confiança {lastAssessment.trustDelta > 0 ? "+" : ""}{lastAssessment.trustDelta}</p>}
+          </div>
+        </section>
+
         <section className="mt-auto space-y-3 pb-3">
           {calendar.phase === "life" && pendingLifeEvent ? (
             <div className="rounded-lg border border-border bg-card p-4">
