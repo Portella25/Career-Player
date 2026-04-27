@@ -86,11 +86,42 @@ export type CareerEventLog = {
   label: string;
 };
 
+export type CareerObjective = {
+  id: string;
+  label: string;
+  current: number;
+  target: number;
+  rewardReputation: number;
+  rewardBalance: number;
+  completed: boolean;
+};
+
+export type ContractStatus = "academy" | "rotation" | "starter" | "prospect";
+
+export type CareerContract = {
+  club: string;
+  status: ContractStatus;
+  weeklySalary: number;
+  appearances: number;
+  nextReviewWeek: number;
+};
+
+export type WeeklyAssessment = {
+  id: string;
+  grade: "A" | "B" | "C" | "D";
+  label: string;
+  trustDelta: number;
+  salaryDelta: number;
+};
+
 export type CareerSnapshot = {
   player: PlayerProfile;
   calendar: CareerCalendar;
   lastMatch?: MatchResult;
   pendingLifeEvent?: LifeEvent;
+  objectives: CareerObjective[];
+  contract: CareerContract;
+  lastAssessment?: WeeklyAssessment;
   matchHistory: MatchResult[];
   relationships: RelationshipMap;
   eventLog: CareerEventLog[];
