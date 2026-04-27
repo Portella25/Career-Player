@@ -124,6 +124,37 @@ const getNextOpponent = (season: number, week: number) => {
   return opponents[Math.floor(random() * opponents.length)];
 };
 
+const advanceObjectives = (career: CareerSnapshot, result: MatchResult) => {
+  let reputationReward = 0;
+  let balanceReward = 0;
+  const objectives = career.objectives.map((objective) => {
+    if (objective.completed) return objective;
+
+    const current =
+      objective.id === "score-3"
+        ? Math.min(objective.target, objective.current + result.goals)
+        : objective.id === "rating-75"
+          ? Math.min(objective.target, objective.current + (result.playerRating >= 75 ? 1 : 0))
+          : Math.min(objective.target, career.relationships.coach);
+    const completed = current >= objective.target;
+    if (completed) {
+      reputationReward += objective.rewardReputation;
+      balanceReward += objective.rewardBalance;
+    }
+    return { ...objective, current, completed };
+  });
+
+  return { objectives, reputationReward, balanceReward };
+};
+
+const assessWeek = (career: CareerSnapshot, result: MatchResult): WeeklyAssessment => {
+  const score = result.playerRating + result.goals * 5 + result.assists * 3 + Math.round(career.relationships.coach * 0.15);
+  if (score >= 92) return { id: `assessment:${result.id}`, grade: "A", label: "Semana dominante", trustDelta: 5, salaryDelta: 12 };
+  if (score >= 78) return { id: `assessment:${result.id}`, grade: "B", label: "Boa evolução", trustDelta: 3, salaryDelta: 5 };
+  if (score >= 63) return { id: `assessment:${result.id}`, grade: "C", label: "Dentro do plano", trustDelta: 1, salaryDelta: 0 };
+  return { id: `assessment:${result.id}`, grade: "D", label: "Abaixo do esperado", trustDelta: -4, salaryDelta: 0 };
+};
+
 export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const seed = `${career.player.id}:${career.calendar.season}:${career.calendar.week}:${career.player.form}`;
   const random = createSeededRandom(seed);
@@ -155,7 +186,7 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const playerRating = clamp(Math.round(58 + goals * 14 + assists * 8 + career.player.form * 0.12 - (100 - career.player.energy) * 0.08), 40, 99);
   const opponentGoals = Math.floor(random() * 3);
   const teamGoals = Math.max(goals, Math.floor(random() * 2) + goals + (assists > 0 ? 1 : 0));
-  const grossSalary = career.ledger.weeklySalary;
+  const grossSalary = career.contract.weeklySalary;
   const tax = Math.round(grossSalary * career.ledger.taxRate);
   const netIncome = grossSalary - tax - career.ledger.weeklyExpenses;
   const result: MatchResult = {
@@ -173,6 +204,10 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
 
   const nextSeason = career.calendar.week >= 52 ? career.calendar.season + 1 : career.calendar.season;
   const nextWeek = career.calendar.week >= 52 ? 1 : career.calendar.week + 1;
+  const objectiveProgress = advanceObjectives(career, result);
+  const assessment = assessWeek(career, result);
+  const nextSalary = grossSalary + assessment.salaryDelta;
+  const nextStatus = career.contract.appearances + 1 >= 8 && career.relationships.coach + assessment.trustDelta >= 65 ? "rotation" : career.contract.status;
 
   return {
     ...career,
