@@ -128,6 +128,24 @@ const Index = () => {
         </section>
 
         <section className="space-y-3 pb-5">
+          {pendingOffer && (
+            <div className="rounded-lg border border-primary bg-card p-4">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-primary text-primary-foreground">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black leading-tight">Oferta: {pendingOffer.club}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground capitalize">{pendingOffer.role} · €{pendingOffer.weeklySalary}/sem · bônus €{pendingOffer.signingBonus}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={rejectOffer} className="rounded-md border border-border bg-secondary px-3 py-3 text-sm font-black text-secondary-foreground">Recusar</button>
+                <button type="button" onClick={acceptOffer} className="rounded-md bg-primary px-3 py-3 text-sm font-black text-primary-foreground">Assinar</button>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -150,6 +168,26 @@ const Index = () => {
               ))}
             </div>
             {lastAssessment && <p className="mt-3 text-xs font-bold text-muted-foreground">Avaliação: {lastAssessment.label} · confiança {lastAssessment.trustDelta > 0 ? "+" : ""}{lastAssessment.trustDelta}</p>}
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-bold">Scouts observando</h2>
+            </div>
+            <div className="space-y-3">
+              {scoutInterest.map((scout) => (
+                <div key={scout.club}>
+                  <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+                    <span className="font-bold text-muted-foreground">{scout.club}</span>
+                    <span className="font-black capitalize">{scout.tier} · {scout.interest}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${scout.interest}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
