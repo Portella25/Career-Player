@@ -214,9 +214,13 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
     player: {
       ...career.player,
       energy: clamp(career.player.energy + result.energyDelta),
-      reputation: clamp(career.player.reputation + result.reputationDelta),
+      reputation: clamp(career.player.reputation + result.reputationDelta + objectiveProgress.reputationReward),
       form: clamp(career.player.form + goals * 2 + assists - 1),
       happiness: clamp(career.player.happiness + (teamGoals > opponentGoals ? 2 : -2)),
+    },
+    relationships: {
+      ...career.relationships,
+      coach: clamp(career.relationships.coach + assessment.trustDelta),
     },
     calendar: {
       season: nextSeason,
@@ -224,9 +228,19 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
       phase: "life",
       nextOpponent: getNextOpponent(nextSeason, nextWeek),
     },
+    contract: {
+      ...career.contract,
+      weeklySalary: nextSalary,
+      status: nextStatus,
+      appearances: career.contract.appearances + 1,
+      nextReviewWeek: nextWeek + 5,
+    },
+    objectives: objectiveProgress.objectives,
+    lastAssessment: assessment,
     ledger: {
       ...career.ledger,
-      balance: career.ledger.balance + netIncome,
+      weeklySalary: nextSalary,
+      balance: career.ledger.balance + netIncome + objectiveProgress.balanceReward,
       totalEarned: career.ledger.totalEarned + grossSalary,
       lastNetIncome: netIncome,
     },
@@ -235,6 +249,7 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
     eventLog: [
       { id: `match:${result.id}`, week: career.calendar.week, type: "match" as const, label: `${teamGoals}-${opponentGoals} vs ${result.opponent}` },
       { id: `finance:${result.id}`, week: career.calendar.week, type: "finance" as const, label: `Saldo semanal €${netIncome}` },
+      ...(objectiveProgress.balanceReward > 0 ? [{ id: `objective:${result.id}`, week: career.calendar.week, type: "life" as const, label: `Bônus de meta €${objectiveProgress.balanceReward}` }] : []),
       ...(career.eventLog ?? []),
     ].slice(0, 8),
     lastMatch: result,
