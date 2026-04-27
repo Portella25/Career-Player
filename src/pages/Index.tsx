@@ -1,4 +1,4 @@
-import { Activity, CalendarDays, Dumbbell, Heart, Megaphone, RotateCcw, Shield, Trophy, Users, WalletCards } from "lucide-react";
+import { Activity, CalendarDays, ClipboardCheck, Dumbbell, Heart, Megaphone, RotateCcw, Shield, Trophy, Users, WalletCards } from "lucide-react";
 import type { TrainingFocus } from "@/domain/career";
 import { useCareerStore } from "@/state/careerStore";
 
@@ -27,7 +27,7 @@ const attributeLabels: Record<TrainingFocus, string> = {
 
 const Index = () => {
   const { career, train, playMatch, chooseLifeEvent, recover, resetCareer } = useCareerStore();
-  const { player, calendar, lastMatch, ledger, pendingLifeEvent, relationships } = career;
+  const { player, calendar, lastMatch, ledger, pendingLifeEvent, relationships, objectives, contract, lastAssessment } = career;
   const primaryAction = calendar.phase === "match" ? playMatch : calendar.phase === "recovery" ? recover : undefined;
 
   return (
@@ -88,6 +88,14 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Elenco</p>
                 <p className="text-lg font-black">{relationships.squad}</p>
               </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-md bg-muted p-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Contrato</p>
+                <p className="text-sm font-black capitalize">{contract.status} · {contract.appearances} jogos</p>
+              </div>
+              <p className="text-sm font-black">€{contract.weeklySalary}/sem</p>
             </div>
 
           <div className="mt-3 rounded-md bg-muted p-3">
