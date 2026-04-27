@@ -1,7 +1,12 @@
-import type { CareerSnapshot, LifeEvent, LifeEventOption, MatchResult, TrainingFocus } from "@/domain/career";
+import type { CareerObjective, CareerSnapshot, LifeEvent, LifeEventOption, MatchResult, TrainingFocus, WeeklyAssessment } from "@/domain/career";
 import { createSeededRandom } from "./random";
 
 const opponents = ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II", "Rotterdam 1908", "Monaco Rouge"];
+const initialObjectives: CareerObjective[] = [
+  { id: "score-3", label: "Marcar 3 gols", current: 0, target: 3, rewardReputation: 4, rewardBalance: 80, completed: false },
+  { id: "rating-75", label: "Nota média 75+ em 3 jogos", current: 0, target: 3, rewardReputation: 5, rewardBalance: 120, completed: false },
+  { id: "coach-60", label: "Confiança do técnico 60", current: 48, target: 60, rewardReputation: 3, rewardBalance: 60, completed: false },
+];
 const lifeEvents: LifeEvent[] = [
   {
     id: "coach-extra-session",
@@ -61,6 +66,14 @@ export const initialCareer: CareerSnapshot = {
     coach: 48,
     squad: 44,
     fans: 36,
+  },
+  objectives: initialObjectives,
+  contract: {
+    club: "Lisbon Lions U19",
+    status: "academy",
+    weeklySalary: 120,
+    appearances: 0,
+    nextReviewWeek: 6,
   },
   eventLog: [],
   matchHistory: [],
