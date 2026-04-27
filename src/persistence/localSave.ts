@@ -20,6 +20,8 @@ export const loadCareerSave = (): CareerSnapshot | undefined => {
       player: { ...initialCareer.player, ...parsed.player, attributes: { ...initialCareer.player.attributes, ...parsed.player?.attributes } },
       relationships: { ...initialCareer.relationships, ...parsed.relationships },
       objectives: parsed.objectives ?? initialCareer.objectives,
+      scoutInterest: parsed.scoutInterest ?? initialCareer.scoutInterest,
+      pendingOffer: parsed.pendingOffer,
       lastAssessment: parsed.lastAssessment,
       eventLog: parsed.eventLog ?? [],
       matchHistory: parsed.matchHistory ?? (parsed.lastMatch ? [parsed.lastMatch] : []),

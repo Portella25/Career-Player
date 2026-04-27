@@ -1,4 +1,4 @@
-import type { CareerObjective, CareerSnapshot, LifeEvent, LifeEventOption, MatchResult, TrainingFocus, WeeklyAssessment } from "@/domain/career";
+import type { CareerObjective, CareerSnapshot, ClubOffer, LifeEvent, LifeEventOption, MatchResult, ScoutInterest, TrainingFocus, WeeklyAssessment } from "@/domain/career";
 import { createSeededRandom } from "./random";
 
 const opponents = ["Porto Norte", "Sevilla Azul", "Milano Primavera", "Dortmund II", "Rotterdam 1908", "Monaco Rouge"];
@@ -6,6 +6,11 @@ const initialObjectives: CareerObjective[] = [
   { id: "score-3", label: "Marcar 3 gols", current: 0, target: 3, rewardReputation: 4, rewardBalance: 80, completed: false },
   { id: "rating-75", label: "Nota média 75+ em 3 jogos", current: 0, target: 3, rewardReputation: 5, rewardBalance: 120, completed: false },
   { id: "coach-60", label: "Confiança do técnico 60", current: 48, target: 60, rewardReputation: 3, rewardBalance: 60, completed: false },
+];
+const initialScoutInterest: ScoutInterest[] = [
+  { club: "Braga Vale", tier: "local", interest: 18 },
+  { club: "Anderlecht Juniors", tier: "national", interest: 8 },
+  { club: "Torino Academy", tier: "elite", interest: 3 },
 ];
 const lifeEvents: LifeEvent[] = [
   {
@@ -68,6 +73,7 @@ export const initialCareer: CareerSnapshot = {
     fans: 36,
   },
   objectives: initialObjectives,
+  scoutInterest: initialScoutInterest,
   contract: {
     club: "Lisbon Lions U19",
     status: "academy",
@@ -155,6 +161,30 @@ const assessWeek = (career: CareerSnapshot, result: MatchResult): WeeklyAssessme
   return { id: `assessment:${result.id}`, grade: "D", label: "Abaixo do esperado", trustDelta: -4, salaryDelta: 0 };
 };
 
+const updateScoutInterest = (career: CareerSnapshot, result: MatchResult) =>
+  career.scoutInterest.map((scout, index) => {
+    const tierPenalty = index * 2;
+    const delta = Math.max(0, Math.round(result.playerRating / 18) + result.goals * 4 + result.assists * 2 + Math.floor(career.player.reputation / 18) - tierPenalty);
+    return { ...scout, interest: clamp(scout.interest + delta, 0, 100) };
+  });
+
+const generateOffer = (career: CareerSnapshot, scoutInterest: ScoutInterest[], week: number): ClubOffer | undefined => {
+  if (career.pendingOffer) return career.pendingOffer;
+  const scout = scoutInterest.find((item) => item.interest >= 72 && item.club !== career.player.club);
+  if (!scout) return undefined;
+
+  const tierMultiplier = scout.tier === "elite" ? 3 : scout.tier === "national" ? 2 : 1;
+  return {
+    id: `offer:${scout.club}:${week}`,
+    club: scout.club,
+    tier: scout.tier,
+    role: scout.tier === "elite" ? "prospect" : scout.tier === "national" ? "rotation" : "starter",
+    weeklySalary: career.contract.weeklySalary + 65 * tierMultiplier,
+    signingBonus: 180 * tierMultiplier,
+    reputationRequired: 18 * tierMultiplier,
+  };
+};
+
 export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const seed = `${career.player.id}:${career.calendar.season}:${career.calendar.week}:${career.player.form}`;
   const random = createSeededRandom(seed);
@@ -206,6 +236,8 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const nextWeek = career.calendar.week >= 52 ? 1 : career.calendar.week + 1;
   const objectiveProgress = advanceObjectives(career, result);
   const assessment = assessWeek(career, result);
+  const scoutInterest = updateScoutInterest(career, result);
+  const pendingOffer = generateOffer(career, scoutInterest, nextWeek);
   const nextSalary = grossSalary + assessment.salaryDelta;
   const nextStatus = career.contract.appearances + 1 >= 8 && career.relationships.coach + assessment.trustDelta >= 65 ? "rotation" : career.contract.status;
 
@@ -236,6 +268,8 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
       nextReviewWeek: nextWeek + 5,
     },
     objectives: objectiveProgress.objectives,
+    scoutInterest,
+    pendingOffer,
     lastAssessment: assessment,
     ledger: {
       ...career.ledger,
@@ -295,4 +329,49 @@ export const recoverPlayer = (career: CareerSnapshot): CareerSnapshot => ({
     ...career.calendar,
     phase: "training",
   },
+});
+
+export const acceptClubOffer = (career: CareerSnapshot): CareerSnapshot => {
+  if (!career.pendingOffer) return career;
+
+  return {
+    ...career,
+    player: {
+      ...career.player,
+      club: career.pendingOffer.club,
+      reputation: clamp(career.player.reputation + 3),
+      happiness: clamp(career.player.happiness + 6),
+    },
+    contract: {
+      club: career.pendingOffer.club,
+      status: career.pendingOffer.role,
+      weeklySalary: career.pendingOffer.weeklySalary,
+      appearances: 0,
+      nextReviewWeek: career.calendar.week + 6,
+    },
+    relationships: { coach: 42, squad: 35, fans: 22 },
+    ledger: {
+      ...career.ledger,
+      weeklySalary: career.pendingOffer.weeklySalary,
+      balance: career.ledger.balance + career.pendingOffer.signingBonus,
+    },
+    scoutInterest: initialScoutInterest.map((scout) => ({ ...scout, interest: scout.club === career.pendingOffer?.club ? 0 : Math.max(0, scout.interest - 20) })),
+    pendingOffer: undefined,
+    eventLog: [
+      { id: `transfer:${career.calendar.season}:${career.calendar.week}`, week: career.calendar.week, type: "life" as const, label: `Assinou com ${career.pendingOffer.club}` },
+      ...(career.eventLog ?? []),
+    ].slice(0, 8),
+  };
+};
+
+export const rejectClubOffer = (career: CareerSnapshot): CareerSnapshot => ({
+  ...career,
+  scoutInterest: career.scoutInterest.map((scout) => (scout.club === career.pendingOffer?.club ? { ...scout, interest: 45 } : scout)),
+  eventLog: career.pendingOffer
+    ? [
+        { id: `reject:${career.pendingOffer.id}`, week: career.calendar.week, type: "life" as const, label: `Recusou ${career.pendingOffer.club}` },
+        ...(career.eventLog ?? []),
+      ].slice(0, 8)
+    : career.eventLog,
+  pendingOffer: undefined,
 });

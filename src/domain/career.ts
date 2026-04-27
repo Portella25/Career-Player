@@ -114,11 +114,29 @@ export type WeeklyAssessment = {
   salaryDelta: number;
 };
 
+export type ScoutInterest = {
+  club: string;
+  tier: "local" | "national" | "elite";
+  interest: number;
+};
+
+export type ClubOffer = {
+  id: string;
+  club: string;
+  tier: "local" | "national" | "elite";
+  role: ContractStatus;
+  weeklySalary: number;
+  signingBonus: number;
+  reputationRequired: number;
+};
+
 export type CareerSnapshot = {
   player: PlayerProfile;
   calendar: CareerCalendar;
   lastMatch?: MatchResult;
   pendingLifeEvent?: LifeEvent;
+  pendingOffer?: ClubOffer;
+  scoutInterest: ScoutInterest[];
   objectives: CareerObjective[];
   contract: CareerContract;
   lastAssessment?: WeeklyAssessment;
