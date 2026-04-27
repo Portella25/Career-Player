@@ -330,3 +330,48 @@ export const recoverPlayer = (career: CareerSnapshot): CareerSnapshot => ({
     phase: "training",
   },
 });
+
+export const acceptClubOffer = (career: CareerSnapshot): CareerSnapshot => {
+  if (!career.pendingOffer) return career;
+
+  return {
+    ...career,
+    player: {
+      ...career.player,
+      club: career.pendingOffer.club,
+      reputation: clamp(career.player.reputation + 3),
+      happiness: clamp(career.player.happiness + 6),
+    },
+    contract: {
+      club: career.pendingOffer.club,
+      status: career.pendingOffer.role,
+      weeklySalary: career.pendingOffer.weeklySalary,
+      appearances: 0,
+      nextReviewWeek: career.calendar.week + 6,
+    },
+    relationships: { coach: 42, squad: 35, fans: 22 },
+    ledger: {
+      ...career.ledger,
+      weeklySalary: career.pendingOffer.weeklySalary,
+      balance: career.ledger.balance + career.pendingOffer.signingBonus,
+    },
+    scoutInterest: initialScoutInterest.map((scout) => ({ ...scout, interest: scout.club === career.pendingOffer?.club ? 0 : Math.max(0, scout.interest - 20) })),
+    pendingOffer: undefined,
+    eventLog: [
+      { id: `transfer:${career.calendar.season}:${career.calendar.week}`, week: career.calendar.week, type: "life" as const, label: `Assinou com ${career.pendingOffer.club}` },
+      ...(career.eventLog ?? []),
+    ].slice(0, 8),
+  };
+};
+
+export const rejectClubOffer = (career: CareerSnapshot): CareerSnapshot => ({
+  ...career,
+  scoutInterest: career.scoutInterest.map((scout) => (scout.club === career.pendingOffer?.club ? { ...scout, interest: 45 } : scout)),
+  eventLog: career.pendingOffer
+    ? [
+        { id: `reject:${career.pendingOffer.id}`, week: career.calendar.week, type: "life" as const, label: `Recusou ${career.pendingOffer.club}` },
+        ...(career.eventLog ?? []),
+      ].slice(0, 8)
+    : career.eventLog,
+  pendingOffer: undefined,
+});
