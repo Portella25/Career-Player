@@ -161,6 +161,30 @@ const assessWeek = (career: CareerSnapshot, result: MatchResult): WeeklyAssessme
   return { id: `assessment:${result.id}`, grade: "D", label: "Abaixo do esperado", trustDelta: -4, salaryDelta: 0 };
 };
 
+const updateScoutInterest = (career: CareerSnapshot, result: MatchResult) =>
+  career.scoutInterest.map((scout, index) => {
+    const tierPenalty = index * 2;
+    const delta = Math.max(0, Math.round(result.playerRating / 18) + result.goals * 4 + result.assists * 2 + Math.floor(career.player.reputation / 18) - tierPenalty);
+    return { ...scout, interest: clamp(scout.interest + delta, 0, 100) };
+  });
+
+const generateOffer = (career: CareerSnapshot, scoutInterest: ScoutInterest[], week: number): ClubOffer | undefined => {
+  if (career.pendingOffer) return career.pendingOffer;
+  const scout = scoutInterest.find((item) => item.interest >= 72 && item.club !== career.player.club);
+  if (!scout) return undefined;
+
+  const tierMultiplier = scout.tier === "elite" ? 3 : scout.tier === "national" ? 2 : 1;
+  return {
+    id: `offer:${scout.club}:${week}`,
+    club: scout.club,
+    tier: scout.tier,
+    role: scout.tier === "elite" ? "prospect" : scout.tier === "national" ? "rotation" : "starter",
+    weeklySalary: career.contract.weeklySalary + 65 * tierMultiplier,
+    signingBonus: 180 * tierMultiplier,
+    reputationRequired: 18 * tierMultiplier,
+  };
+};
+
 export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const seed = `${career.player.id}:${career.calendar.season}:${career.calendar.week}:${career.player.form}`;
   const random = createSeededRandom(seed);
@@ -212,6 +236,8 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
   const nextWeek = career.calendar.week >= 52 ? 1 : career.calendar.week + 1;
   const objectiveProgress = advanceObjectives(career, result);
   const assessment = assessWeek(career, result);
+  const scoutInterest = updateScoutInterest(career, result);
+  const pendingOffer = generateOffer(career, scoutInterest, nextWeek);
   const nextSalary = grossSalary + assessment.salaryDelta;
   const nextStatus = career.contract.appearances + 1 >= 8 && career.relationships.coach + assessment.trustDelta >= 65 ? "rotation" : career.contract.status;
 
@@ -242,6 +268,8 @@ export const simulateMatch = (career: CareerSnapshot): CareerSnapshot => {
       nextReviewWeek: nextWeek + 5,
     },
     objectives: objectiveProgress.objectives,
+    scoutInterest,
+    pendingOffer,
     lastAssessment: assessment,
     ledger: {
       ...career.ledger,
